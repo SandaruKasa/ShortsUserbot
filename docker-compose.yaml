@@ -1,0 +1,7 @@
+version: '3.9'
+services:
+  userbot:
+    build: .
+    image: shorts-userbot
+    container_name: shorts-userbot
+    restart: always
