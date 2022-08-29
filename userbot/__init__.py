@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import sys
@@ -6,6 +7,8 @@ from typing import Generator
 from pyrogram import Client, enums, filters, types
 
 from . import config
+
+logger = logging.getLogger(__name__)
 
 client = Client(
     name="Shorts",
@@ -53,17 +56,21 @@ youtube_short_link = re.compile(r".*youtube\.com/shorts/([\w\-]{11}).*", flags=r
 youtube_short_repl = r"https://youtu.be/\1"
 
 
-@client.on_message(filters=filters.incoming & ~filters.channel)
-async def reaction_handler(client: Client, message: types.Message):
+@client.on_message(filters=~filters.channel)
+async def shorts_handler(client: Client, message: types.Message):
+    logger.debug("New message: %s", repr(message))
     result = []
     for link in extract_links(message):
         substituted, subs = youtube_short_link.subn(youtube_short_repl, link)
         if subs != 0:
             result.append(substituted)
     if result:
+        logger.info("Converted in chat %s: %s", repr(message.chat), ", ".join(result))
         await message.reply(
-            "Hello! This isn't me who is sending this message, "
-            "it's a program I wrote to automatically convert YouTube Shorts into normal videos. "
-            "Like this:\n" + "\n".join(result),
+            "Hello! This message isn't sent by me. "
+            "It's sent by [a program I wrote](https://github.com/SandaruKasa/ShortsUserbot) "
+            "to automatically convert YouTube Shorts into normal videos:\n"
+            + "\n".join(result),
+            parse_mode=enums.ParseMode.MARKDOWN,
             disable_web_page_preview=True,
         )
