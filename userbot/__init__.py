@@ -4,7 +4,7 @@ import re
 import sys
 from typing import Generator
 
-from pyrogram import Client, enums, filters, types
+from pyrogram import Client, enums, errors, filters, types
 
 from . import config
 
@@ -16,6 +16,44 @@ client = Client(
     api_hash=config.api_hash,
     workdir=os.getenv("PYROGRAM_WORKDIR", Client.WORKDIR),
 )
+
+
+async def im_in_chat(me: types.User, chat: types.Chat):
+    match chat.type:
+        case enums.ChatType.PRIVATE | enums.ChatType.BOT:
+            # I don't think it's possible to get your hands on any messages from a private chat you're not a part of. (*)
+            return True
+
+        case enums.ChatType.CHANNEL:
+            # IDC.
+            # Fetching members won't work I guess (you can only do that if you're an admin and even then there's a hard limit of 200). (*)
+            # Maybe fetching permissions is something you can try, (or is that admin permissions? then it probably won't work either).
+            # There might actually be some sort of `.am_joined` flag, but I'm too lazy to check.
+            # In the end, it doesn't even matter: I filter out channel messages for this userbot anyways.
+            raise NotImplementedError(
+                "Can't be bothered to check whether I'm a part of a channel"
+            )
+
+        case enums.ChatType.GROUP:
+            # I guess some weird shit can happen when the message is from a group that has been converted to a supergroup.
+            # Or you're viewing a message from an old group you're no longer a part of.
+            # But let's hope Telegram won't send you updates about those.
+            return True
+
+        case enums.ChatType.SUPERGROUP:
+            # Telegram will actually send you _ALL_ the updates from a discussion group as soon as you open comments. (*)
+            # У команды Дурова мало того, что руки из жопы растут, так ещё видимо и ЧСВ люто прёт, раз они вместо того,
+            # чтобы использовать уже существующие TLS/BSON, пилят СвОи СоБсТвЕнНыЕ MTProto/TypeLanguage.
+            try:
+                me_as_member = await chat.get_member(user_id=me.id)
+                return True
+            except errors.UserNotParticipant:
+                return False
+
+        case other:
+            raise NotImplementedError(f"Hooray! New chat type: {other}")
+
+    # (*) At least for now. God knows what awful code Telegram will introduce in the future updates.
 
 
 # Copied from aiogram:
@@ -56,7 +94,10 @@ youtube_short_link = re.compile(r".*youtube\.com/shorts/([\w\-]{11}).*", flags=r
 youtube_short_repl = r"https://youtu.be/\1"
 
 
-@client.on_message(filters=~filters.channel)
+@client.on_message(
+    ~filters.channel  # don't react to channel posts (you're probably not an admin there anyways)
+    & ~filters.scheduled  # don't react to messages that have just been scheduled but not yet sent
+)
 async def shorts_handler(client: Client, message: types.Message):
     logger.debug("New message: %s", repr(message))
     result = []
@@ -64,7 +105,16 @@ async def shorts_handler(client: Client, message: types.Message):
         substituted, subs = youtube_short_link.subn(youtube_short_repl, link)
         if subs != 0:
             result.append(substituted)
-    if result:
+    # Sadly the return value of all filters is discarded by pyrogram,
+    # so it's impossible to turn the code above into a Filter.__call__
+    # and then use its return value here.
+    if (
+        # there were some links that got converted
+        result
+        # and I'm actually in this chat
+        # (i.e. this message didn't come from a discussion group I'm not a part of)
+        and (await im_in_chat(client.me, message.chat))
+    ):
         logger.info("Converted in chat %s: %s", repr(message.chat), ", ".join(result))
         await message.reply(
             "Hello! This message isn't sent by me. "
