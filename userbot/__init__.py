@@ -118,9 +118,11 @@ async def shorts_handler(client: Client, message: types.Message):
         logger.info("Converted in chat %s: %s", repr(message.chat), ", ".join(result))
         await message.reply(
             "Hello! This message isn't sent by me. "
-            "It's sent by [a program I wrote](https://github.com/SandaruKasa/ShortsUserbot) "
+            'It\'s sent by <a href="https://github.com/SandaruKasa/ShortsUserbot">a program I wrote</a> '
             "to automatically convert YouTube Shorts into normal videos:\n"
-            + "\n".join(result),
-            parse_mode=enums.ParseMode.MARKDOWN,
+            + "\n".join(
+                result  # no need to escape these, because there will be no <, >, &, or " in the generated links
+            ),
+            parse_mode=enums.ParseMode.HTML,
             disable_web_page_preview=True,
         )
