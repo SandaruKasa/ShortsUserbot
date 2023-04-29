@@ -12,5 +12,8 @@ Environment="PYROGRAM_WORKDIR=/var/pyrogram/"
 ExecStart=/usr/bin/python3 /usr/lib/shorts_userbot/shorts_userbot.py
 KillSignal=SIGINT
 
+Restart=on-failure
+RestartSec=5s
+
 [Install]
 WantedBy=multi-user.target
