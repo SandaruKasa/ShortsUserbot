@@ -1,5 +1,6 @@
 [Unit]
 Description=Pyrogram userbot against YouTube Shorts
+After=network.target
 
 [Service]
 Type=simple
@@ -10,3 +11,6 @@ Group=pyrogram
 Environment="PYROGRAM_WORKDIR=/var/pyrogram/"
 ExecStart=/usr/bin/python3 /usr/lib/shorts_userbot/shorts_userbot.py
 KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
