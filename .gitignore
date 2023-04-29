@@ -9,4 +9,4 @@ __pycache__/
 *.session
 *.session-journal
 
-config.py
+docker-compose.override*

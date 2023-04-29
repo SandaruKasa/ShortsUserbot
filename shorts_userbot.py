@@ -6,14 +6,10 @@ from typing import Generator
 
 from pyrogram import Client, enums, errors, filters, types
 
-from . import config
-
 logger = logging.getLogger(__name__)
 
 client = Client(
     name="Shorts",
-    api_id=config.api_id,
-    api_hash=config.api_hash,
     workdir=os.getenv("PYROGRAM_WORKDIR", Client.WORKDIR),
 )
 
@@ -126,3 +122,15 @@ async def shorts_handler(client: Client, message: types.Message):
             parse_mode=enums.ParseMode.HTML,
             disable_web_page_preview=True,
         )
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        handlers=[
+            logging.StreamHandler(),
+        ],
+        level=os.getenv("LOGLEVEL", logging.getLevelName(logging.INFO)).upper(),
+        format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s]: %(message)s",
+        datefmt=r"%Y-%m-%dT%H-%M-%S",
+    )
+    client.run()
