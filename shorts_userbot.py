@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 client = Client(
     name="Shorts",
+    api_id=os.getenv("API_ID"),
+    api_hash=os.getenv("API_HASH"),
     workdir=os.getenv("PYROGRAM_WORKDIR", Client.WORKDIR),
 )
 
@@ -125,7 +127,7 @@ async def shorts_handler(client: Client, message: types.Message):
         )
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(
         handlers=[
             logging.StreamHandler(),
@@ -135,3 +137,7 @@ if __name__ == "__main__":
         datefmt=r"%Y-%m-%dT%H-%M-%S",
     )
     client.run()
+
+
+if __name__ == "__main__":
+    exit(main())
