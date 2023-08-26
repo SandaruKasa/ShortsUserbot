@@ -9,7 +9,7 @@ User=shorts_userbot
 Group=pyrogram
 
 Environment="PYROGRAM_WORKDIR=/var/pyrogram/"
-ExecStart=/usr/bin/python3 /usr/lib/shorts_userbot/shorts_userbot.py
+ExecStart=/usr/bin/shorts-userbot
 KillSignal=SIGINT
 
 Restart=on-failure
