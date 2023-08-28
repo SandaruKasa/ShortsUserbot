@@ -15,27 +15,21 @@
         pkgs = import nixpkgs { inherit system; };
       });
 
+
+      takeAttrs = attrList: x: (map (attr: x."${attr}") attrList);
+
       selectPython = pkgs: pkgs.python311;
-      selectPythonPackages = pypkgs: with pypkgs; [
-        pyrogram
-        tgcrypto
+      pythonDeps = [
+        "pyrogram"
+        "tgcrypto"
+      ];
+      pythonDevDeps = [
+        "black"
+        "mypy"
+        "isort"
       ];
     in
     {
-      devShells = forAllSystems ({ pkgs }: {
-        default =
-          let
-            python = selectPython pkgs;
-            devPackages = with pkgs; [
-              nixpkgs-fmt
-              black
-              mypy
-            ];
-          in
-          pkgs.mkShellNoCC {
-            packages = [ (python.withPackages selectPythonPackages) ] ++ devPackages;
-          };
-      });
       packages = forAllSystems ({ pkgs }: {
         default =
           let
@@ -46,8 +40,22 @@
             name = "shorts-userbot";
             format = "pyproject";
             buildInputs = with pythonPkgs; [ setuptools ];
-            propagatedBuildInputs = selectPythonPackages pythonPkgs;
+            propagatedBuildInputs = takeAttrs pythonDeps pythonPkgs;
             src = ./.;
+          };
+      });
+
+      devShells = forAllSystems ({ pkgs }: {
+        default =
+          let
+            python = (selectPython pkgs).withPackages
+              (takeAttrs (pythonDeps ++ pythonDevDeps));
+          in
+          pkgs.mkShellNoCC {
+            packages = [
+              python
+              pkgs.nixpkgs-fmt
+            ];
           };
       });
     };
