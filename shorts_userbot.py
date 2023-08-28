@@ -5,16 +5,9 @@ import re
 import sys
 from typing import Generator
 
-from pyrogram import Client, enums, errors, filters, types
+from pyrogram import Client, enums, errors, filters, handlers, types
 
 logger = logging.getLogger(__name__)
-
-client = Client(
-    name="Shorts",
-    api_id=os.getenv("API_ID"),
-    api_hash=os.getenv("API_HASH"),
-    workdir=os.getenv("PYROGRAM_WORKDIR", Client.WORKDIR),
-)
 
 
 async def im_in_chat(me: types.User, chat: types.Chat):
@@ -93,11 +86,7 @@ youtube_short_link = re.compile(r".*youtube\.com/shorts/([\w\-]{11}).*", flags=r
 youtube_short_repl = r"https://youtu.be/\1"
 
 
-@client.on_message(
-    ~filters.channel  # don't react to channel posts (you're probably not an admin there anyways)
-    & ~filters.scheduled  # don't react to messages that have just been scheduled but not yet sent
-)
-async def shorts_handler(client: Client, message: types.Message):
+async def shorts_callback(client: Client, message: types.Message):
     logger.debug("New message: %s", repr(message))
     result = []
     for link in extract_links(message):
@@ -127,7 +116,33 @@ async def shorts_handler(client: Client, message: types.Message):
         )
 
 
+shorts_handler = handlers.MessageHandler(
+    callback=shorts_callback,
+    filters=(
+        ~filters.channel  # don't react to channel posts (you're probably not an admin there anyways)
+        & ~filters.scheduled  # don't react to messages that have just been scheduled but not yet sent
+    ),
+)
+
+
+def construct_client(
+    workdir: str,
+    api_id: str | None = None,
+    api_hash: str | None = None,
+) -> Client:
+    result = Client(
+        name="Shorts",
+        api_id=api_id,
+        api_hash=api_hash,
+        workdir=workdir,
+    )
+    result.add_handler(shorts_handler)
+    return result
+
+
 def main():
+    import argparse
+
     logging.basicConfig(
         handlers=[
             logging.StreamHandler(),
@@ -136,8 +151,22 @@ def main():
         format="[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s]: %(message)s",
         datefmt=r"%Y-%m-%dT%H-%M-%S",
     )
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--workdir",
+        default=".",
+        help="the directory where the session files are stored",
+    )
+    args = parser.parse_args()
+    client = construct_client(
+        workdir=args.workdir,
+        api_id=os.getenv("API_ID"),
+        api_hash=os.getenv("API_HASH"),
+    )
     client.run()
 
 
 if __name__ == "__main__":
-    exit(main())
+    import sys
+
+    sys.exit(main())

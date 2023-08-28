@@ -10,3 +10,8 @@ __pycache__/
 *.session-journal
 
 /result*
+
+/shorts-userbot/
+/pkg/
+/src/
+*.pkg.tar*

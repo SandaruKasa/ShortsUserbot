@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "shorts_userbot"
 description = "A Telegram userbot that converts all YouTube Shorts link to normal videos"
-version = "1.0.0"
+version = "1.1.0"
 requires-python = "~=3.10"
 dependencies = ["pyrogram~=2.0.27", "tgcrypto~=1.2.3"]
 
