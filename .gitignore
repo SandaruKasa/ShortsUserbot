@@ -1,16 +1,20 @@
+# IDEs
 .idea/
 .vscode/
 
+# Python
 venv/
-env/
-
 __pycache__/
 
+# Pyrogram
 *.session
 *.session-journal
 
+# Nix
 /result*
+.pre-commit-config.yaml
 
+# Makepkg
 /shorts-userbot/
 /pkg/
 /src/

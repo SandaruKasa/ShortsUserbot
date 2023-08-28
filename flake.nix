@@ -1,14 +1,22 @@
 {
   description = "A Telegram userbot that converts all YouTube Shorts link to normal videos";
 
+  inputs = {
+    pre-commit-hooks-nix.url = "github:cachix/pre-commit-hooks.nix";
+  };
+
   outputs = inputs @ { nixpkgs, flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        inputs.pre-commit-hooks-nix.flakeModule
+      ];
+
       systems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
 
-      perSystem = { pkgs, ... }:
+      perSystem = { pkgs, config, ... }:
         let
           takeAttrs = attrList: x: (map (attr: x."${attr}") attrList);
 
@@ -34,13 +42,28 @@
               src = ./.;
             };
 
+
           devShells.default =
             pkgs.mkShellNoCC {
+              inherit (config.pre-commit.devShell) shellHook;
               packages = [
                 (python.withPackages (takeAttrs (pythonDeps ++ pythonDevDeps)))
-                pkgs.nixpkgs-fmt
               ];
             };
+
+          pre-commit.settings = {
+            hooks = {
+              black.enable = true;
+              isort.enable = true;
+              nixpkgs-fmt.enable = true;
+            };
+
+            settings = {
+              isort.profile = "black";
+            };
+          };
+
+          formatter = pkgs.nixpkgs-fmt;
         };
     };
 }
