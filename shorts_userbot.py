@@ -10,7 +10,7 @@ from pyrogram import Client, enums, errors, filters, handlers, types
 logger = logging.getLogger(__name__)
 
 
-async def im_in_chat(me: types.User, chat: types.Chat):
+async def im_in_chat(me: types.User, chat: types.Chat) -> bool:
     match chat.type:
         case enums.ChatType.PRIVATE | enums.ChatType.BOT:
             # I don't think it's possible to get your hands on any messages from a private chat you're not a part of. (*)
@@ -46,6 +46,18 @@ async def im_in_chat(me: types.User, chat: types.Chat):
             raise NotImplementedError(f"Hooray! New chat type: {other}")
 
     # (*) At least for now. God knows what awful code Telegram will introduce in the future updates.
+
+
+# crude approximation
+async def is_discussion_forward(message: types.Message) -> bool:
+    sender = message.sender_chat
+    forward_from = message.forward_from_chat
+    return (
+        sender is not None
+        and forward_from is not None
+        and sender.id == forward_from.id
+        and sender.type == enums.ChatType.CHANNEL
+    )
 
 
 # Copied from aiogram:
@@ -102,6 +114,8 @@ async def shorts_callback(client: Client, message: types.Message):
         # and I'm actually in this chat
         # (i.e. this message didn't come from a discussion group I'm not a part of)
         and (await im_in_chat(client.me, message.chat))
+        # don't reply to channel posts, it gets annoying
+        and not (await is_discussion_forward(message))
     ):
         logger.info("Converted in chat %s: %s", repr(message.chat), ", ".join(result))
         await message.reply(
