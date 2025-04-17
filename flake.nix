@@ -2,7 +2,20 @@
   description = "A Telegram userbot that converts all YouTube Shorts link to normal videos";
 
   inputs = {
-    pre-commit-hooks-nix.url = "github:cachix/pre-commit-hooks.nix";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs-lib.url = "github:NixOS/nixpkgs/nixos-24.11?dir=lib";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs = {
+        nixpkgs-lib.follows = "nixpkgs-lib";
+      };
+    };
+    pre-commit-hooks-nix = {
+      url = "github:cachix/pre-commit-hooks.nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
   };
 
   outputs = inputs @ { nixpkgs, flake-parts, ... }:
